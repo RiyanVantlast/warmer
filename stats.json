@@ -1,0 +1,30 @@
+{
+  "daily": {
+    "2026-04-18": {
+      "Account03": 276,
+      "Account01": 663,
+      "Account02": 772,
+      "Account06": 30,
+      "Account04": 50,
+      "Account07": 57,
+      "Account05": 53
+    },
+    "2026-04-19": {
+      "Account07": 1,
+      "Account01": 563,
+      "Account03": 292,
+      "Account04": 366,
+      "Account02": 255,
+      "Account05": 5
+    },
+    "2026-04-21": {
+      "Account01": 6,
+      "Account03": 1,
+      "Account02": 1
+    },
+    "2026-04-22": {
+      "Account02": 2,
+      "Account01": 6
+    }
+  }
+}
