@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Warmer • Spark</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; }
+        .sidebar { transition: all 0.2s; }
+        .nav-item { transition: all 0.15s; border-radius: 10px; }
+        .nav-item:hover { background-color: #eef2ff; }
+        .nav-item.active { background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); color: white; }
+        .nav-item.active i { color: white; }
+        .btn-gradient { background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); }
+        .btn-gradient:hover { opacity: 0.9; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+        .log-container::-webkit-scrollbar { width: 5px; }
+        .log-container::-webkit-scrollbar-track { background: #1e293b; }
+        .log-container::-webkit-scrollbar-thumb { background: #475569; border-radius: 8px; }
+        .pairing-grid { max-height: 400px; overflow-y: auto; }
+        .pairing-dark-bg { background: #1e1e2f; border-color: #2d2d44; }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+<!-- SIDEBAR -->
+<aside class="sidebar w-72 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 shadow-sm">
+    <div class="p-6 border-b border-gray-100">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+                <i class="fab fa-whatsapp text-white text-xl"></i>
+            </div>
+            <div>
+                <span class="text-xl font-bold text-gray-800">Warmer</span>
+                <span class="text-xl font-bold text-indigo-600">Spark</span>
+                <p class="text-xs text-gray-500 mt-0.5">v2.0 • Multi-account</p>
+            </div>
+        </div>
+    </div>
+    <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto custom-scroll">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">Menu Utama</div>
+        <a href="#" id="nav-dashboard" class="nav-item flex items-center px-4 py-3 text-sm font-medium text-gray-600 hover:text-indigo-700">
+            <i class="fas fa-tachometer-alt w-5 h-5 mr-3"></i><span>Dashboard</span>
+        </a>
+        <a href="#" id="nav-setup" class="nav-item flex items-center px-4 py-3 text-sm font-medium text-gray-600 hover:text-indigo-700">
+            <i class="fas fa-sliders-h w-5 h-5 mr-3"></i><span>Setup Akun</span>
+        </a>
+        <a href="#" id="nav-stats" class="nav-item flex items-center px-4 py-3 text-sm font-medium text-gray-600 hover:text-indigo-700">
+            <i class="fas fa-chart-bar w-5 h-5 mr-3"></i><span>Statistik</span>
+        </a>
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-3 px-3">Pengaturan</div>
+        <a href="#" id="nav-settings" class="nav-item flex items-center px-4 py-3 text-sm font-medium text-gray-600 hover:text-indigo-700">
+            <i class="fas fa-cog w-5 h-5 mr-3"></i><span>Preferensi</span>
+        </a>
+        <a href="#" id="nav-logs" class="nav-item flex items-center px-4 py-3 text-sm font-medium text-gray-600 hover:text-indigo-700">
+            <i class="fas fa-history w-5 h-5 mr-3"></i><span>Log Lengkap</span>
+        </a>
+    </nav>
+    <div class="p-4 border-t border-gray-100">
+        <div class="flex items-center">
+            <div class="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center"><i class="fas fa-user text-indigo-600"></i></div>
+            <div class="ml-3"><p class="text-sm font-medium text-gray-700">Admin</p><p class="text-xs text-gray-500">admin@warmer.local</p></div>
+        </div>
+    </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="flex-1 flex flex-col overflow-hidden bg-gray-50/80">
+    <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
+        <div>
+            <h1 id="page-title" class="text-xl font-bold text-gray-800">Setup Akun</h1>
+            <p id="page-subtitle" class="text-sm text-gray-500 mt-0.5">Konfigurasi akun WhatsApp untuk pemanasan</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <div id="connection-status" class="flex items-center space-x-2 bg-gray-100 px-3 py-1.5 rounded-full">
+                <span class="relative flex h-2 w-2"><span class="relative inline-flex rounded-full h-2 w-2 bg-gray-500"></span></span>
+                <span class="text-xs font-medium text-gray-600">Tidak Terhubung</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-6 custom-scroll">
+        <!-- SETUP PAGE -->
+        <div id="setup-page">
+            <div class="max-w-4xl mx-auto">
+                <div class="mb-8">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 flex items-center">
+                            <div id="step1-indicator" class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-semibold">1</div>
+                            <div class="flex-1 h-1 mx-2 bg-indigo-600"></div>
+                            <div id="step2-indicator" class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-semibold">2</div>
+                            <div class="flex-1 h-1 mx-2 bg-gray-200"></div>
+                            <div id="step3-indicator" class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-semibold">3</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-xs font-medium mt-2 px-2">
+                        <span class="text-indigo-600">Pilih Akun</span>
+                        <span class="text-gray-400">Metode Pairing</span>
+                        <span class="text-gray-400">Mode Operasi</span>
+                    </div>
+                </div>
+
+                <form id="setup-form">
+                    <!-- STEP 1 -->
+                    <div id="step1-content" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4"><i class="fas fa-users text-indigo-500 mr-2"></i>Pilih Akun untuk Pemanasan</h3>
+                        <div class="bg-indigo-50/50 rounded-xl p-4 mb-4">
+                            <p class="text-sm text-gray-600 mb-3">Pilih minimal 1 dan maksimal 10 akun dari daftar di bawah:</p>
+                            <div id="account-checkboxes" class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-64 overflow-y-auto custom-scroll p-1">
+                                <div class="text-gray-400 text-sm col-span-full py-4 text-center">Memuat daftar akun...</div>
+                            </div>
+                            <div class="mt-3 flex items-center justify-between">
+                                <span class="text-xs text-gray-500">Terpilih: <span id="selected-count-display">0</span>/10</span>
+                                <button type="button" id="select-all-btn" class="text-xs text-indigo-600 hover:underline">Pilih Semua</button>
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="button" id="next-to-step2" class="btn-gradient text-white px-5 py-2.5 rounded-xl text-sm font-medium shadow-sm flex items-center space-x-2">
+                                <span>Lanjut ke Metode Pairing</span><i class="fas fa-arrow-right text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2 -->
+                    <div id="step2-content" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4"><i class="fas fa-qrcode text-indigo-500 mr-2"></i>Metode Pairing & Koneksi</h3>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Pilih metode autentikasi:</label>
+                            <div class="flex space-x-4">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="radio" name="pairing-method" value="qr" checked class="text-indigo-600"><span class="text-sm font-medium">QR Code</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="radio" name="pairing-method" value="code" class="text-indigo-600"><span class="text-sm font-medium">Pairing Code</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="pairing-display-area" class="mt-4 p-4 pairing-dark-bg rounded-xl border border-gray-700">
+                            <p class="text-sm text-gray-400 text-center py-8">Pilih akun terlebih dahulu di langkah 1</p>
+                        </div>
+                        <div id="phone-inputs-container" class="hidden mt-4 space-y-3">
+                            <p class="text-sm font-medium text-gray-700">Nomor Telepon untuk Pairing Code:</p>
+                            <div id="phone-inputs-list" class="space-y-2 max-h-48 overflow-y-auto custom-scroll"></div>
+                        </div>
+                        <div class="mt-6 flex justify-between">
+                            <button type="button" id="back-to-step1" class="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fas fa-arrow-left mr-2"></i>Kembali</button>
+                            <button type="button" id="start-connection-btn" class="btn-gradient text-white px-6 py-2.5 rounded-xl text-sm font-medium shadow-sm flex items-center space-x-2">
+                                <i class="fas fa-plug"></i><span>Mulai Koneksi</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3 -->
+                    <div id="step3-content" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4"><i class="fas fa-play-circle text-indigo-500 mr-2"></i>Mode Operasi Pemanasan</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Pilih mode operasi:</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm">
+                                        <input type="radio" name="operation-mode" value="normal" checked class="sr-only">
+                                        <span class="flex flex-col"><span class="block text-sm font-medium text-gray-900">Mode Normal</span><span class="mt-1 text-xs text-gray-500">Interaksi antar akun & grup</span></span>
+                                        <span class="absolute right-4 top-4 text-indigo-600 hidden check-icon"><i class="fas fa-check-circle"></i></span>
+                                    </label>
+                                    <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm">
+                                        <input type="radio" name="operation-mode" value="target" class="sr-only">
+                                        <span class="flex flex-col"><span class="block text-sm font-medium text-gray-900">Mode Target</span><span class="mt-1 text-xs text-gray-500">Kirim ke 1 nomor terus menerus</span></span>
+                                        <span class="absolute right-4 top-4 text-indigo-600 hidden check-icon"><i class="fas fa-check-circle"></i></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div id="normal-mode-options" class="pl-2 border-l-2 border-indigo-200">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Jadwal:</label>
+                                <div class="flex space-x-4">
+                                    <label class="flex items-center space-x-2"><input type="radio" name="schedule" value="weekday" checked class="text-indigo-600"><span class="text-sm">Hari Kerja (08:00-22:00)</span></label>
+                                    <label class="flex items-center space-x-2"><input type="radio" name="schedule" value="weekend" class="text-indigo-600"><span class="text-sm">Hari Libur (Intensif)</span></label>
+                                </div>
+                            </div>
+                            <div id="target-mode-options" class="hidden pl-2 border-l-2 border-indigo-200 space-y-4">
+                                <div><label class="block text-sm font-medium text-gray-700 mb-1">Nomor Tujuan</label><div class="flex"><span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">+62</span><input type="tel" id="target-number" placeholder="81234567890" class="flex-1 border border-gray-300 rounded-r-lg px-3 py-2 text-sm"></div></div>
+                                <div><label class="block text-sm font-medium text-gray-700 mb-1">Akun Pengirim</label><select id="sender-account-select" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"><option value="">Pilih akun pengirim</option></select></div>
+                            </div>
+                        </div>
+                        <div class="mt-6 p-4 bg-green-50 rounded-xl border border-green-200">
+                            <h4 class="text-sm font-semibold text-green-800 mb-2"><i class="fas fa-check-circle mr-2"></i>Akun Siap Digunakan</h4>
+                            <div id="ready-accounts-list" class="text-sm text-green-700">Belum ada akun yang terhubung.</div>
+                        </div>
+                        <div class="mt-6 flex justify-between">
+                            <button type="button" id="back-to-step2" class="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fas fa-arrow-left mr-2"></i>Kembali</button>
+                            <button type="button" id="start-warming-btn" class="btn-gradient text-white px-6 py-2.5 rounded-xl text-sm font-medium shadow-sm flex items-center space-x-2"><i class="fas fa-fire"></i><span>Mulai Pemanasan</span></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- DASHBOARD PAGE -->
+        <div id="dashboard-page" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-5">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center justify-between"><div><p class="text-xs font-medium text-gray-500">Total Akun</p><p class="text-2xl font-bold text-gray-800" id="dash-total-accounts">0</p></div><div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center"><i class="fas fa-users text-indigo-600"></i></div></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center justify-between"><div><p class="text-xs font-medium text-gray-500">Online</p><p class="text-2xl font-bold text-green-600" id="dash-online-accounts">0</p></div><div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center"><i class="fas fa-circle text-green-500 text-xs"></i></div></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center justify-between"><div><p class="text-xs font-medium text-gray-500">Pesan Hari Ini</p><p class="text-2xl font-bold text-purple-600" id="dash-total-messages">0</p></div><div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center"><i class="fas fa-comment-dots text-purple-600"></i></div></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center justify-between"><div><p class="text-xs font-medium text-gray-500">Mode Operasi</p><p class="text-lg font-semibold text-gray-800" id="dash-mode">-</p></div><div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-sliders-h text-blue-600"></i></div></div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div class="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 p-4"><h3 class="font-semibold text-gray-700 mb-3 text-sm"><i class="fas fa-phone-alt text-indigo-500 mr-2"></i>Status Akun</h3><div class="custom-scroll overflow-y-auto max-h-96" id="dashboard-account-cards"></div></div>
+                <div class="lg:col-span-2 bg-gray-900 rounded-xl shadow-lg border border-gray-800 p-4 flex flex-col"><h3 class="font-semibold text-gray-300 mb-2 text-sm"><i class="fas fa-stream text-indigo-400 mr-2"></i>Log Aktivitas<span class="ml-2 text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">Live</span></h3><div class="flex-1 overflow-y-auto font-mono text-xs log-container" id="dashboard-log-container"><div class="text-gray-400">[Sistem] Menunggu aktivitas...</div></div></div>
+            </div>
+        </div>
+
+        <!-- STATS PAGE -->
+        <div id="stats-page" class="hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5"><h3 class="font-semibold text-gray-800 mb-4">Statistik 7 Hari Terakhir</h3><div class="overflow-x-auto"><table class="min-w-full text-sm"><thead><tr class="border-b"><th class="text-left py-2">Tanggal</th><th class="text-left py-2" colspan="10">Pesan per Akun</th><th class="text-right py-2">Total</th></tr></thead><tbody id="stats-table-body"><tr><td colspan="12" class="text-center py-6 text-gray-500">Memuat data...</td></tr></tbody></table></div></div>
+        </div>
+    </div>
+</main>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    let isConfigured = false;
+    let availableAccounts = [];
+    let selectedAccounts = [];
+    let connectedAccounts = {};
+    let currentStep = 1;
+
+    // DOM Elements
+    const setupPage = document.getElementById('setup-page');
+    const dashboardPage = document.getElementById('dashboard-page');
+    const statsPage = document.getElementById('stats-page');
+    const pageTitle = document.getElementById('page-title');
+    const pageSubtitle = document.getElementById('page-subtitle');
+    const connectionStatus = document.getElementById('connection-status');
+    const navDashboard = document.getElementById('nav-dashboard');
+    const navSetup = document.getElementById('nav-setup');
+    const navStats = document.getElementById('nav-stats');
+    const step1Content = document.getElementById('step1-content');
+    const step2Content = document.getElementById('step2-content');
+    const step3Content = document.getElementById('step3-content');
+    const step1Indicator = document.getElementById('step1-indicator');
+    const step2Indicator = document.getElementById('step2-indicator');
+    const step3Indicator = document.getElementById('step3-indicator');
+    const accountCheckboxesDiv = document.getElementById('account-checkboxes');
+    const selectedCountDisplay = document.getElementById('selected-count-display');
+    const pairingDisplayArea = document.getElementById('pairing-display-area');
+    const phoneInputsContainer = document.getElementById('phone-inputs-container');
+    const phoneInputsList = document.getElementById('phone-inputs-list');
+    const normalModeOptions = document.getElementById('normal-mode-options');
+    const targetModeOptions = document.getElementById('target-mode-options');
+    const senderAccountSelect = document.getElementById('sender-account-select');
+    const readyAccountsList = document.getElementById('ready-accounts-list');
+    const nextToStep2 = document.getElementById('next-to-step2');
+    const backToStep1 = document.getElementById('back-to-step1');
+    const startConnectionBtn = document.getElementById('start-connection-btn');
+    const backToStep2 = document.getElementById('back-to-step2');
+    const startWarmingBtn = document.getElementById('start-warming-btn');
+
+    function addLog(account, message) {
+        const logContainer = document.getElementById('dashboard-log-container');
+        if (!logContainer) return;
+        const time = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const entry = document.createElement('div');
+        entry.className = 'py-1 border-b border-gray-800 last:border-0';
+        entry.innerHTML = `<span class="text-indigo-400">[${time}]</span> <span class="text-emerald-400 font-medium">[${account}]</span> <span class="text-gray-300">${message}</span>`;
+        logContainer.appendChild(entry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+        if (logContainer.children.length > 80) logContainer.removeChild(logContainer.children[0]);
+    }
+
+    function updateConnectionStatus(readyCount, total) {
+        if (readyCount > 0) {
+            connectionStatus.innerHTML = `<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span><span class="text-xs font-medium text-green-700">${readyCount}/${total} Online</span>`;
+        } else {
+            connectionStatus.innerHTML = `<span class="relative flex h-2 w-2"><span class="relative inline-flex rounded-full h-2 w-2 bg-gray-400"></span></span><span class="text-xs font-medium text-gray-600">Tidak Terhubung</span>`;
+        }
+    }
+
+    async function loadAvailableAccounts() {
+        try {
+            const res = await fetch('/api/available-accounts');
+            const data = await res.json();
+            availableAccounts = data.accounts || [];
+            renderAccountCheckboxes();
+        } catch (err) {
+            accountCheckboxesDiv.innerHTML = '<div class="text-red-500 col-span-full py-4 text-center">Gagal memuat accounts.json</div>';
+        }
+    }
+
+    function renderAccountCheckboxes() {
+        if (!availableAccounts.length) {
+            accountCheckboxesDiv.innerHTML = '<div class="text-gray-400 col-span-full py-4 text-center">Tidak ada akun di accounts.json</div>';
+            return;
+        }
+        let html = '';
+        availableAccounts.forEach(acc => {
+            html += `<label class="flex items-center space-x-2 bg-white p-2 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer"><input type="checkbox" name="selected-accounts" value="${acc}" class="account-checkbox rounded text-indigo-600"><span class="text-sm truncate">${acc}</span></label>`;
+        });
+        accountCheckboxesDiv.innerHTML = html;
+        document.querySelectorAll('.account-checkbox').forEach(cb => cb.addEventListener('change', updateSelectedCount));
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        const checked = document.querySelectorAll('.account-checkbox:checked');
+        selectedAccounts = Array.from(checked).map(cb => cb.value);
+        selectedCountDisplay.textContent = selectedAccounts.length;
+        senderAccountSelect.innerHTML = '<option value="">Pilih akun pengirim</option>';
+        selectedAccounts.forEach(acc => { const opt = document.createElement('option'); opt.value = acc; opt.textContent = acc; senderAccountSelect.appendChild(opt); });
+        if (currentStep === 2) renderPairingDisplay();
+    }
+
+    function renderPairingDisplay() {
+        if (selectedAccounts.length === 0) {
+            pairingDisplayArea.innerHTML = '<p class="text-sm text-gray-400 text-center py-8">Pilih minimal satu akun di langkah 1</p>';
+            return;
+        }
+        const pairingMethod = document.querySelector('input[name="pairing-method"]:checked').value;
+        if (pairingMethod === 'qr') {
+            pairingDisplayArea.innerHTML = '<div class="pairing-grid space-y-3"></div>';
+            phoneInputsContainer.classList.add('hidden');
+        } else {
+            let html = '';
+            selectedAccounts.forEach(acc => { html += `<div class="flex items-center space-x-2"><span class="text-sm w-28 truncate font-medium">${acc}</span><input type="tel" name="phone_${acc}" placeholder="62812xxx" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" required></div>`; });
+            phoneInputsList.innerHTML = html;
+            phoneInputsContainer.classList.remove('hidden');
+            pairingDisplayArea.innerHTML = '<p class="text-sm text-gray-400">Masukkan nomor telepon untuk mendapatkan pairing code. Kode akan muncul di sini setelah koneksi dimulai.</p>';
+        }
+    }
+
+    function updateStep(step) {
+        currentStep = step;
+        step1Content.classList.add('hidden');
+        step2Content.classList.add('hidden');
+        step3Content.classList.add('hidden');
+        if (step === 1) {
+            step1Content.classList.remove('hidden');
+            step1Indicator.className = 'w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-semibold';
+            step2Indicator.className = 'w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-semibold';
+            step3Indicator.className = 'w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-semibold';
+        } else if (step === 2) {
+            step2Content.classList.remove('hidden');
+            step1Indicator.className = 'w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-semibold';
+            step2Indicator.className = 'w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-semibold';
+            step3Indicator.className = 'w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-semibold';
+            renderPairingDisplay();
+        } else if (step === 3) {
+            step3Content.classList.remove('hidden');
+            step1Indicator.className = 'w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-semibold';
+            step2Indicator.className = 'w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-semibold';
+            step3Indicator.className = 'w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-semibold';
+            updateReadyAccountsList();
+        }
+    }
+
+    function updateReadyAccountsList() {
+        const ready = Object.keys(connectedAccounts).filter(id => connectedAccounts[id]);
+        if (ready.length === 0) readyAccountsList.innerHTML = 'Belum ada akun yang terhubung.';
+        else readyAccountsList.innerHTML = ready.map(id => `<span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mr-2 mb-2">✓ ${id}</span>`).join('');
+    }
+
+    function generateQRCode(accountId, qrData) {
+        let container = document.getElementById(`pairing-${accountId}`);
+        const pairingArea = pairingDisplayArea;
+        if (!container) {
+            if (!pairingArea.querySelector('.pairing-grid')) pairingArea.innerHTML = '<div class="pairing-grid space-y-3"></div>';
+            const grid = pairingArea.querySelector('.pairing-grid');
+            container = document.createElement('div');
+            container.id = `pairing-${accountId}`;
+            container.className = 'border border-gray-700 rounded-lg p-3 bg-gray-800/50';
+            grid.appendChild(container);
+        }
+
+        const isDataUrl = qrData && qrData.startsWith('data:image');
+        const imgSrc = isDataUrl ? qrData : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+
+        container.innerHTML = `
+            <div class="flex items-center justify-between mb-2">
+                <span class="font-medium text-sm text-gray-200">${accountId}</span>
+                <span class="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded-full">Scan QR</span>
+            </div>
+            <div class="flex justify-center">
+                <img src="${imgSrc}" alt="QR Code" width="200" height="200" style="background: white; border-radius: 12px; padding: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            </div>
+            <p class="text-xs text-gray-400 text-center mt-2">Scan dengan WhatsApp</p>
+            <div id="qr-fallback-${accountId}" class="${isDataUrl ? 'hidden' : ''} mt-2 p-2 bg-gray-900 rounded border border-gray-700">
+                <p class="text-xs text-gray-400 mb-1">Jika QR tidak muncul, salin teks berikut:</p>
+                <code class="text-xs text-gray-300 break-all">${qrData}</code>
+            </div>
+        `;
+    }
+
+    function updatePairingDisplayItem(accountId, status, data = null) {
+        if (status === 'qr' && data) {
+            generateQRCode(accountId, data);
+            return;
+        }
+
+        let container = document.getElementById(`pairing-${accountId}`);
+        const pairingArea = pairingDisplayArea;
+        if (!container) {
+            if (!pairingArea.querySelector('.pairing-grid')) pairingArea.innerHTML = '<div class="pairing-grid space-y-3"></div>';
+            const grid = pairingArea.querySelector('.pairing-grid');
+            container = document.createElement('div');
+            container.id = `pairing-${accountId}`;
+            container.className = 'border border-gray-700 rounded-lg p-3 bg-gray-800/50';
+            grid.appendChild(container);
+        }
+
+        let statusBadge = '', content = '';
+        if (status === 'connecting') {
+            statusBadge = '<span class="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">Menghubungkan...</span>';
+            content = '<div class="text-center py-4 text-gray-400"><i class="fas fa-spinner fa-spin"></i> Menunggu...</div>';
+        } else if (status === 'code' && data) {
+            statusBadge = '<span class="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">Pairing Code</span>';
+            content = `<div class="text-center py-2"><span class="text-2xl font-mono font-bold tracking-wider text-gray-100">${data}</span><p class="text-xs text-gray-400 mt-1">Masukkan kode ini di WhatsApp</p></div>`;
+        } else if (status === 'ready') {
+            statusBadge = '<span class="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full">Terhubung</span>';
+            content = '<div class="text-center py-2 text-green-400"><i class="fas fa-check-circle text-2xl"></i><p class="text-sm">Akun siap</p></div>';
+        } else if (status === 'error') {
+            statusBadge = '<span class="text-xs bg-red-500/20 text-red-300 px-2 py-0.5 rounded-full">Error</span>';
+            content = `<div class="text-center py-2 text-red-400"><i class="fas fa-exclamation-triangle"></i><p class="text-sm">${data || 'Gagal'}</p>
+                <button class="mt-2 text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded" onclick="retryPairingCode()"><i class="fas fa-redo-alt mr-1"></i>Coba Lagi</button>
+                <button class="mt-2 text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded ml-2" onclick="switchToQR()"><i class="fas fa-qrcode mr-1"></i>Gunakan QR</button>
+            </div>`;
+        }
+
+        container.innerHTML = `<div class="flex items-center justify-between mb-2"><span class="font-medium text-sm text-gray-200">${accountId}</span>${statusBadge}</div>${content}`;
+    }
+
+    window.retryPairingCode = function() {
+        startConnection();
+    };
+    window.switchToQR = function() {
+        document.querySelector('input[value="qr"]').checked = true;
+        renderPairingDisplay();
+        startConnection();
+    };
+
+    async function startConnection() {
+        if (selectedAccounts.length === 0) { alert('Pilih minimal satu akun'); return; }
+        const pairingMethod = document.querySelector('input[name="pairing-method"]:checked').value;
+        const usePairingCode = pairingMethod === 'code';
+        let phoneNumbers = {};
+        if (usePairingCode) {
+            let valid = true;
+            selectedAccounts.forEach(acc => { const input = document.querySelector(`input[name="phone_${acc}"]`); if (!input || !input.value.trim()) { alert(`Nomor untuk ${acc} harus diisi`); valid = false; } phoneNumbers[acc] = input.value.replace(/\D/g, ''); });
+            if (!valid) return;
+        }
+        startConnectionBtn.disabled = true;
+        startConnectionBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Menghubungkan...</span>';
+        try {
+            const res = await fetch('/api/connect-accounts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accounts: selectedAccounts, usePairingCode, phoneNumbers }) });
+            const result = await res.json();
+            if (!result.success) { alert('Gagal: ' + result.error); startConnectionBtn.disabled = false; startConnectionBtn.innerHTML = '<i class="fas fa-plug"></i><span>Mulai Koneksi</span>'; }
+        } catch (err) { alert('Error: ' + err.message); startConnectionBtn.disabled = false; startConnectionBtn.innerHTML = '<i class="fas fa-plug"></i><span>Mulai Koneksi</span>'; }
+    }
+
+    async function startWarming() {
+        const operationMode = document.querySelector('input[name="operation-mode"]:checked').value;
+        const config = { accounts: selectedAccounts, usePairingCode: document.querySelector('input[name="pairing-method"]:checked').value === 'code', phoneNumbers: {}, modeOperasi: 'weekday', oneTargetMode: false, targetNumber: '', senderAccount: '' };
+        if (config.usePairingCode) selectedAccounts.forEach(acc => { const input = document.querySelector(`input[name="phone_${acc}"]`); config.phoneNumbers[acc] = input.value.replace(/\D/g, ''); });
+        if (operationMode === 'normal') config.modeOperasi = document.querySelector('input[name="schedule"]:checked').value;
+        else { config.oneTargetMode = true; config.targetNumber = document.getElementById('target-number').value.replace(/\D/g, ''); config.senderAccount = senderAccountSelect.value; if (!config.targetNumber || !config.senderAccount) { alert('Nomor tujuan dan akun pengirim harus diisi'); return; } }
+        try {
+            const res = await fetch('/api/start-warmup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
+            const result = await res.json();
+            if (result.success) { addLog('SYSTEM', 'Konfigurasi diterima, memulai pemanasan...'); isConfigured = true; showDashboard(); }
+            else alert('Gagal: ' + result.error);
+        } catch (err) { alert('Error: ' + err.message); }
+    }
+
+    function showDashboard() {
+        setupPage.classList.add('hidden'); dashboardPage.classList.remove('hidden'); statsPage.classList.add('hidden');
+        pageTitle.textContent = 'Dashboard Pemanasan'; pageSubtitle.textContent = 'Pantau aktivitas akun WhatsApp Anda';
+        navDashboard.classList.add('active'); navSetup.classList.remove('active'); navStats.classList.remove('active');
+    }
+    function showSetup() {
+        setupPage.classList.remove('hidden'); dashboardPage.classList.add('hidden'); statsPage.classList.add('hidden');
+        pageTitle.textContent = 'Setup Akun'; pageSubtitle.textContent = 'Konfigurasi akun WhatsApp untuk pemanasan';
+        navSetup.classList.add('active'); navDashboard.classList.remove('active'); navStats.classList.remove('active');
+    }
+    function showStats() {
+        setupPage.classList.add('hidden'); dashboardPage.classList.add('hidden'); statsPage.classList.remove('hidden');
+        pageTitle.textContent = 'Statistik'; pageSubtitle.textContent = 'Aktivitas 7 hari terakhir';
+        navStats.classList.add('active'); navDashboard.classList.remove('active'); navSetup.classList.remove('active');
+        loadStats();
+    }
+    async function loadStats() {
+        try {
+            const res = await fetch('/api/stats/weekly');
+            const data = await res.json();
+            const tbody = document.getElementById('stats-table-body');
+            const dates = Object.keys(data).sort().reverse();
+            if (dates.length === 0) { tbody.innerHTML = '<tr><td colspan="12" class="text-center py-3 text-gray-500">Belum ada data</td></tr>'; return; }
+            const allAccounts = new Set();
+            dates.forEach(date => { Object.keys(data[date]).forEach(acc => allAccounts.add(acc)); });
+            const accounts = Array.from(allAccounts);
+            let html = '';
+            for (const date of dates) {
+                const accData = data[date];
+                let total = 0;
+                let row = `<tr class="border-b"><td class="py-1.5 font-medium text-xs">${date}</td>`;
+                for (const acc of accounts) { const count = accData[acc] || 0; total += count; row += `<td class="py-1.5 px-1 text-center text-xs">${count}</td>`; }
+                row += `<td class="text-right py-1.5 font-semibold text-xs">${total}</td></tr>`;
+                html += row;
+            }
+            const headerRow = tbody.previousElementSibling?.querySelector('tr');
+            if (headerRow) {
+                const totalTh = headerRow.querySelector('th:last-child');
+                while (headerRow.children.length > 2) headerRow.removeChild(headerRow.children[1]);
+                accounts.forEach(acc => { const th = document.createElement('th'); th.className = 'text-left py-1.5 text-xs'; th.textContent = acc; headerRow.insertBefore(th, totalTh); });
+            }
+            tbody.innerHTML = html;
+        } catch (e) {}
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadAvailableAccounts();
+        const res = await fetch('/api/config-status'); const data = await res.json(); isConfigured = data.configured;
+        if (isConfigured) showDashboard(); else showSetup();
+
+        document.querySelectorAll('input[name="operation-mode"]').forEach(radio => radio.addEventListener('change', (e) => {
+            document.querySelectorAll('input[name="operation-mode"]').forEach(r => r.closest('label').querySelector('.check-icon').classList.add('hidden'));
+            e.target.closest('label').querySelector('.check-icon').classList.remove('hidden');
+            normalModeOptions.classList.toggle('hidden', e.target.value === 'target');
+            targetModeOptions.classList.toggle('hidden', e.target.value !== 'target');
+        }));
+        document.querySelector('input[name="operation-mode"][value="normal"]').closest('label').querySelector('.check-icon').classList.remove('hidden');
+
+        navDashboard.addEventListener('click', e => { e.preventDefault(); if (isConfigured) showDashboard(); });
+        navSetup.addEventListener('click', e => { e.preventDefault(); showSetup(); });
+        navStats.addEventListener('click', e => { e.preventDefault(); if (isConfigured) showStats(); });
+
+        nextToStep2.addEventListener('click', () => { if (selectedAccounts.length > 0) updateStep(2); else alert('Pilih minimal satu akun'); });
+        backToStep1.addEventListener('click', () => updateStep(1));
+        startConnectionBtn.addEventListener('click', startConnection);
+        backToStep2.addEventListener('click', () => updateStep(2));
+        startWarmingBtn.addEventListener('click', startWarming);
+        document.querySelectorAll('input[name="pairing-method"]').forEach(r => r.addEventListener('change', renderPairingDisplay));
+        document.getElementById('select-all-btn').addEventListener('click', () => { document.querySelectorAll('.account-checkbox').forEach(cb => cb.checked = true); updateSelectedCount(); });
+
+        socket.on('pairing-start', ({ accountId }) => { updatePairingDisplayItem(accountId, 'connecting'); });
+        socket.on('qr', ({ accountId, qr }) => { updatePairingDisplayItem(accountId, 'qr', qr); });
+        socket.on('pairing-code', ({ accountId, code }) => { updatePairingDisplayItem(accountId, 'code', code); });
+        socket.on('connection-ready', ({ accountId }) => { connectedAccounts[accountId] = true; updatePairingDisplayItem(accountId, 'ready'); updateReadyAccountsList(); if (selectedAccounts.every(acc => connectedAccounts[acc])) { startConnectionBtn.disabled = false; startConnectionBtn.innerHTML = '<i class="fas fa-plug"></i><span>Mulai Koneksi</span>'; updateStep(3); } });
+        socket.on('pairing-error', ({ accountId, error }) => { updatePairingDisplayItem(accountId, 'error', error); startConnectionBtn.disabled = false; startConnectionBtn.innerHTML = '<i class="fas fa-plug"></i><span>Mulai Koneksi</span>'; });
+        socket.on('status-update', data => {
+            if (!isConfigured) return;
+            let online = 0, msg = 0; const cards = document.getElementById('dashboard-account-cards'); let html = '';
+            for (let [id, acc] of Object.entries(data)) { if (acc.ready) online++; msg += acc.messagesToday || 0; html += `<div class="flex items-center justify-between p-2 border-b last:border-0"><div><span class="font-medium text-sm">${id}</span> <span class="text-xs ${acc.ready ? 'text-green-600' : 'text-gray-400'}">${acc.ready ? 'Online' : 'Offline'}</span></div><div class="text-xs text-gray-500">${acc.messagesToday} msg</div></div>`; }
+            cards.innerHTML = html || '<p class="text-gray-400 text-sm">Belum ada akun</p>';
+            document.getElementById('dash-total-accounts').textContent = Object.keys(data).length;
+            document.getElementById('dash-online-accounts').textContent = online;
+            document.getElementById('dash-total-messages').textContent = msg;
+            updateConnectionStatus(online, Object.keys(data).length);
+        });
+        socket.on('log', data => addLog(data.account, data.message));
+    });
+</script>
+</body>
+</html>
